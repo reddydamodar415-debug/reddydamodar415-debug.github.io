@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>FnO Trade Desk</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:#070b14; --card:#0c1220; --border:#162035;
+    --accent:#f0b429; --green:#00e5a0; --red:#ff4560;
+    --blue:#38bdf8; --text:#cdd6f4; --muted:#3d4f6e; --muted2:#6b7fa3;
+    --font:'IBM Plex Mono',monospace; --display:'Bebas Neue',sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;}
+  ::-webkit-scrollbar{width:4px;height:4px;}
+  ::-webkit-scrollbar-thumb{background:#162035;border-radius:4px;}
+
+  /* LOGIN SCREEN */
+  #loginScreen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;text-align:center;}
+  .login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:36px 28px;max-width:400px;width:100%;}
+  .login-title{font-family:var(--display);font-size:42px;letter-spacing:2px;margin-bottom:6px;}
+  .login-sub{font-size:11px;color:var(--muted2);letter-spacing:3px;margin-bottom:28px;}
+  .login-btn{background:var(--accent);color:#070b14;border:none;border-radius:10px;padding:14px 32px;font-family:var(--font);font-size:14px;font-weight:700;letter-spacing:2px;cursor:pointer;width:100%;margin-bottom:14px;}
+  .login-btn:hover{opacity:0.9;}
+  .token-input{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:12px;font-family:var(--font);font-size:12px;width:100%;outline:none;margin-bottom:10px;}
+  .token-btn{background:var(--green);color:#070b14;border:none;border-radius:8px;padding:12px;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;width:100%;letter-spacing:2px;}
+  .divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--muted);font-size:11px;}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+  .warning{background:#ff456011;border:1px solid #ff456033;border-radius:8px;padding:10px 14px;font-size:11px;color:#ff7a93;margin-top:14px;line-height:1.6;}
+
+  /* DASHBOARD */
+  #dashboard{display:none;padding:14px;}
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+  .header-left .sub{font-size:10px;color:var(--muted);letter-spacing:3px;margin-bottom:4px;}
+  .header-left .title{font-family:var(--display);font-size:30px;letter-spacing:2px;}
+  .header-left .title span{color:var(--accent);}
+  .header-left .updated{font-size:10px;color:var(--muted);margin-top:4px;}
+  .header-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+
+  /* Refresh buttons */
+  .refresh-btns{display:flex;gap:4px;}
+  .rbtn{background:transparent;color:var(--muted2);border:1px solid var(--border);border-radius:4px;padding:5px 10px;font-size:10px;font-family:var(--font);cursor:pointer;letter-spacing:1px;}
+  .rbtn.active{background:#f0b42933;color:var(--accent);border-color:var(--accent);}
+
+  /* Countdown */
+  .countdown{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);}
+
+  /* Tabs */
+  .tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;}
+  .tab{background:transparent;color:var(--muted2);border:1px solid var(--border);border-radius:6px;padding:7px 18px;font-size:11px;font-family:var(--font);font-weight:700;cursor:pointer;letter-spacing:2px;}
+  .tab.active{background:var(--accent);color:#070b14;border-color:var(--accent);}
+
+  /* Strategy bar */
+  .strategy-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+  .strat-buy{background:#00e5a011;border:1px solid #00e5a033;border-radius:6px;padding:6px 12px;font-size:11px;}
+  .strat-buy span{color:var(--green);}
+  .strat-sell{background:#ff456011;border:1px solid #ff456033;border-radius:6px;padding:6px 12px;font-size:11px;}
+  .strat-sell span{color:var(--red);}
+
+  /* Cards grid */
+  .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;}
+  .card-top-bar{position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0;}
+  .card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+  .stock-sym{font-size:10px;color:var(--muted);letter-spacing:3px;margin-bottom:4px;}
+  .stock-price{font-family:var(--display);font-size:26px;letter-spacing:1px;}
+  .stock-change{font-size:12px;margin-top:2px;}
+  .card-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;}
+  .badge{border-radius:4px;padding:3px 10px;font-size:11px;font-weight:700;letter-spacing:1px;font-family:var(--font);}
+  .badge-buy{background:#00e5a022;color:var(--green);border:1px solid #00e5a044;}
+  .badge-sell{background:#ff456022;color:var(--red);border:1px solid #ff456044;}
+  .badge-none{background:#3d4f6e22;color:var(--muted2);border:1px solid #3d4f6e44;}
+  .card-footer{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:10px;flex-wrap:wrap;gap:6px;}
+
+  /* Mini chart canvas */
+  .mini-chart{width:100%;height:70px;display:block;}
+
+  /* RSI gauge */
+  .rsi-wrap{display:flex;flex-direction:column;align-items:center;}
+  .rsi-label{font-size:9px;color:var(--muted);letter-spacing:2px;margin-top:2px;}
+
+  /* Alerts */
+  #alertContainer{position:fixed;top:14px;right:14px;z-index:9999;display:flex;flex-direction:column;gap:8px;max-width:280px;}
+  .alert-toast{border-radius:8px;padding:10px 16px;font-size:12px;font-weight:700;font-family:var(--font);animation:slideIn 0.3s ease;box-shadow:0 4px 20px rgba(0,0,0,0.5);}
+  .alert-buy{background:#00e5a0ee;color:#070b14;}
+  .alert-sell{background:#ff4560ee;color:#fff;}
+  @keyframes slideIn{from{opacity:0;transform:translateX(60px);}to{opacity:1;transform:translateX(0);}}
+
+  /* SL Calculator */
+  .calc-wrap{max-width:500px;}
+  .calc-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;}
+  .label{font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-bottom:10px;}
+  .type-btns{display:flex;gap:8px;margin-bottom:14px;}
+  .type-btn{flex:1;padding:9px;border-radius:6px;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;letter-spacing:1px;border:1px solid;}
+  .inputs-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+  .inp{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:9px 12px;font-size:13px;font-family:var(--font);width:100%;outline:none;}
+  .inp:focus{border-color:var(--accent);}
+  .results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .result-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 8px;text-align:center;}
+  .result-label{font-size:9px;color:var(--muted);letter-spacing:2px;margin-bottom:6px;}
+  .result-val{font-size:18px;font-weight:900;font-family:var(--font);}
+  .calc-hint{margin-top:12px;font-size:11px;color:var(--muted2);}
+
+  /* Journal */
+  .journal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .add-btn{background:#f0b42922;color:var(--accent);border:1px solid #f0b42944;border-radius:6px;padding:6px 16px;font-size:11px;font-family:var(--font);cursor:pointer;letter-spacing:1px;}
+  .add-form{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;}
+  .form-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;}
+  .form-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+  .sel{background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:8px;font-family:var(--font);font-size:12px;outline:none;width:100%;}
+  .save-btn{margin-top:8px;background:var(--accent);color:#070b14;border:none;border-radius:6px;padding:9px 20px;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;letter-spacing:1px;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{padding:7px 10px;text-align:left;color:var(--muted);font-size:10px;letter-spacing:2px;font-weight:400;border-bottom:1px solid var(--border);}
+  td{padding:8px 10px;border-bottom:1px solid #16203522;}
+  tr:hover td{background:#111b2e;}
+  .pnl-pos{color:var(--green);font-weight:700;}
+  .pnl-neg{color:var(--red);font-weight:700;}
+
+  /* Loading spinner */
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* Live dot */
+  .live-dot{display:inline-block;width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 1.5s ease infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+  /* Logout */
+  .logout-btn{background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:5px 12px;font-size:10px;font-family:var(--font);cursor:pointer;letter-spacing:1px;}
+
+  @media(max-width:480px){
+    .cards-grid{grid-template-columns:1fr;}
+    .results-grid{grid-template-columns:repeat(3,1fr);}
+    .form-grid3{grid-template-columns:1fr 1fr;}
+    #dashboard{padding:10px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ALERT CONTAINER -->
+<div id="alertContainer"></div>
+
+<!-- ═══════════════════════════════════════════════════
+     LOGIN SCREEN
+═══════════════════════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div style="font-size:32px;margin-bottom:8px;">📊</div>
+    <div class="login-title">TRADE <span style="color:var(--accent)">DESK</span></div>
+    <div class="login-sub">NSE · FnO INTRADAY · RSI + VWAP</div>
+
+    <!-- OAuth Login -->
+    <button class="login-btn" onclick="loginUpstox()">🔐 Login with Upstox</button>
+
+    <div class="divider">OR paste access token</div>
+
+    <!-- Manual token -->
+    <input class="token-input" id="tokenInput" type="password" placeholder="Paste your access token here..."/>
+    <button class="token-btn" onclick="setManualToken()">▶ START DASHBOARD</button>
+
+    <div class="warning">
+      ⚠️ Never share your Access Token or API Secret with anyone.<br/>
+      This dashboard runs only on your device.
+    </div>
+
+    <div style="margin-top:16px;font-size:10px;color:var(--muted);line-height:1.8;">
+      Every morning: Login → Get token → Dashboard goes live<br/>
+      Token is valid for 1 trading day only.
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     MAIN DASHBOARD
+═══════════════════════════════════════════════════ -->
+<div id="dashboard">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="sub">NSE · FnO INTRADAY</div>
+      <div class="title">TRADE <span>DESK</span></div>
+      <div class="updated" id="updatedTime">
+        <span class="live-dot"></span> Live · Updated --:--
+      </div>
+    </div>
+    <div class="header-right">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="refresh-btns">
+          <button class="rbtn" onclick="setRefresh(60)">1m</button>
+          <button class="rbtn active" id="r3" onclick="setRefresh(180)">3m</button>
+          <button class="rbtn" onclick="setRefresh(300)">5m</button>
+        </div>
+        <button class="logout-btn" onclick="logout()">LOGOUT</button>
+      </div>
+      <div class="countdown">
+        <svg width="28" height="28" id="countdownSvg">
+          <circle cx="14" cy="14" r="11" fill="none" stroke="#162035" stroke-width="3"/>
+          <circle cx="14" cy="14" r="11" fill="none" stroke="#f0b429" stroke-width="3"
+            stroke-dasharray="69.1 69.1" stroke-linecap="round"
+            transform="rotate(-90 14 14)" id="countdownArc"/>
+        </svg>
+        <span id="countdownText">180s</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Strategy legend -->
+  <div class="strategy-bar">
+    <div class="strat-buy"><span>▲ BUY</span> RSI &gt; 55 + Price crosses VWAP upward</div>
+    <div class="strat-sell"><span>▼ SELL</span> RSI &lt; 45 + Price crosses VWAP downward</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('signals',this)">SIGNALS</button>
+    <button class="tab" onclick="showTab('calculator',this)">SL CALC</button>
+    <button class="tab" onclick="showTab('journal',this)">JOURNAL</button>
+  </div>
+
+  <!-- SIGNALS TAB -->
+  <div id="tab-signals">
+    <div class="cards-grid" id="cardsGrid">
+      <!-- Cards injected by JS -->
+    </div>
+  </div>
+
+  <!-- CALCULATOR TAB -->
+  <div id="tab-calculator" style="display:none;">
+    <div class="calc-wrap">
+      <div class="calc-card">
+        <div class="label">Stop Loss & Target Calculator</div>
+        <div class="type-btns">
+          <button class="type-btn" id="btnBuy" onclick="setCalcType('BUY')"
+            style="background:#00e5a033;color:var(--green);border-color:#00e5a066;">BUY</button>
+          <button class="type-btn" id="btnSell" onclick="setCalcType('SELL')"
+            style="background:transparent;color:var(--muted2);border-color:var(--border);">SELL</button>
+        </div>
+        <div class="inputs-grid">
+          <input class="inp" id="cEntry" placeholder="Entry Price ₹" oninput="calcRR()"/>
+          <input class="inp" id="cSL" placeholder="Stop Loss ₹" oninput="calcRR()"/>
+          <input class="inp" id="cTarget" placeholder="Target Price ₹" oninput="calcRR()"/>
+          <input class="inp" id="cQty" placeholder="Quantity" oninput="calcRR()"/>
+        </div>
+        <div class="results-grid">
+          <div class="result-box">
+            <div class="result-label">RISK ₹</div>
+            <div class="result-val" id="rRisk" style="color:var(--red)">—</div>
+          </div>
+          <div class="result-box">
+            <div class="result-label">REWARD ₹</div>
+            <div class="result-val" id="rReward" style="color:var(--green)">—</div>
+          </div>
+          <div class="result-box">
+            <div class="result-label">R:R RATIO</div>
+            <div class="result-val" id="rRR" style="color:var(--accent)">—</div>
+          </div>
+        </div>
+        <div class="calc-hint" id="calcHint"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOURNAL TAB -->
+  <div id="tab-journal" style="display:none;">
+    <div class="calc-card" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;">
+      <div class="journal-header">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <div class="label" style="margin:0;">Trade Journal</div>
+          <div style="font-size:14px;font-weight:700;" id="totalPnL">Total P&L: —</div>
+        </div>
+        <button class="add-btn" onclick="toggleForm()">+ ADD TRADE</button>
+      </div>
+
+      <!-- Add form -->
+      <div class="add-form" id="addForm" style="display:none;">
+        <div class="form-grid3">
+          <select class="sel" id="jSym">
+            <option>SWIGGY</option><option>NALCO</option><option>COALINDIA</option>
+            <option>BHARTIARTL</option><option>INFY</option><option>OIL</option>
+          </select>
+          <button class="type-btn" id="jBtnBuy" onclick="setJType('BUY')"
+            style="background:#00e5a033;color:var(--green);border-color:#00e5a066;padding:8px;">BUY</button>
+          <button class="type-btn" id="jBtnSell" onclick="setJType('SELL')"
+            style="background:transparent;color:var(--muted2);border-color:var(--border);padding:8px;">SELL</button>
+        </div>
+        <div class="form-grid3">
+          <input class="inp" id="jEntry" placeholder="Entry ₹"/>
+          <input class="inp" id="jExit" placeholder="Exit ₹"/>
+          <input class="inp" id="jQty" placeholder="Qty"/>
+        </div>
+        <input class="inp" id="jNote" placeholder="Note (e.g. RSI 58, VWAP cross)" style="width:100%;"/>
+        <button class="save-btn" onclick="saveTrade()">SAVE TRADE</button>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>DATE</th><th>SYM</th><th>TYPE</th>
+              <th>ENTRY</th><th>EXIT</th><th>QTY</th><th>P&L</th><th>NOTE</th>
+            </tr>
+          </thead>
+          <tbody id="journalBody">
+            <tr><td colspan="8" style="color:var(--muted);text-align:center;padding:20px;">No trades yet. Add your first trade!</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:24px;font-size:10px;color:var(--muted);letter-spacing:2px;padding-bottom:20px;">
+    ⚠ FOR PERSONAL USE ONLY · NOT FINANCIAL ADVICE · TRADE RESPONSIBLY
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════
+const CLIENT_ID = 'dc2e9744-e001-47e4-b757-938267e4dacd';
+const REDIRECT_URI = 'https://reddydamodar415-debug.github.io';
+const AUTH_URL = `https://api.upstox.com/v2/login/authorization/dialog?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code`;
+
+const STOCKS = [
+  { sym:'SWIGGY',  name:'Swiggy',       token:'NSE_EQ|INE758T01015', lot:1500 },
+  { sym:'NALCO',   name:'NALCO',         token:'NSE_EQ|INE139A01034', lot:3000 },
+  { sym:'COALINDIA',name:'Coal India',   token:'NSE_EQ|INE522F01014', lot:1000 },
+  { sym:'BHARTIARTL',name:'Bharti Airtel',token:'NSE_EQ|INE397D01024', lot:250 },
+  { sym:'INFY',    name:'Infosys',       token:'NSE_EQ|INE009A01021', lot:300  },
+  { sym:'OIL',     name:'Oil India',     token:'NSE_EQ|INE274J01014', lot:1400 },
+];
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let accessToken = localStorage.getItem('upstox_token') || null;
+let refreshInterval = 180;
+let countdown = 180;
+let countdownTimer = null;
+let stockData = {}; // { SYM: { candles:[], rsi:[], prices:[] } }
+let prevSignals = {}; // to detect new signals
+let trades = JSON.parse(localStorage.getItem('trades') || '[]');
+let calcType = 'BUY';
+let jType = 'BUY';
+let audioCtx = null;
+
+// ═══════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════
+function loginUpstox() {
+  window.open(AUTH_URL, '_blank');
+  setTimeout(() => {
+    const code = prompt('After login, copy the "code" from the URL and paste here:\n\n(URL looks like: https://reddydamodar415-debug.github.io?code=XXXXXX)');
+    if (code) exchangeCode(code.trim());
+  }, 3000);
+}
+
+async function exchangeCode(code) {
+  const secret = prompt('Enter your Upstox API Secret to complete login:\n\n(Find it at account.upstox.com/developer/apps → your app)');
+  if (!secret) return;
+
+  try {
+    document.getElementById('loginScreen').innerHTML += '<div style="color:#f0b429;text-align:center;margin-top:10px;font-size:13px;">⏳ Getting access token...</div>';
+
+    const res = await fetch('https://reddydamodar415-debug-github-io.onrender.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, secret })
+    });
+
+    const data = await res.json();
+
+    if (data.access_token) {
+      accessToken = data.access_token;
+      localStorage.setItem('upstox_token', accessToken);
+      startDashboard();
+    } else {
+      alert('Login failed: ' + (data.error || 'Unknown error') + '\n\nTry pasting token manually.');
+    }
+  } catch(e) {
+    alert('Server error. Try pasting token manually.\n\nError: ' + e.message);
+  }
+}
+
+function setManualToken() {
+  const t = document.getElementById('tokenInput').value.trim();
+  if (!t) { alert('Please paste your access token!'); return; }
+  accessToken = t;
+  localStorage.setItem('upstox_token', t);
+  startDashboard();
+}
+
+function logout() {
+  accessToken = null;
+  localStorage.removeItem('upstox_token');
+  clearInterval(countdownTimer);
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+// ═══════════════════════════════════════════════════
+// STARTUP
+// ═══════════════════════════════════════════════════
+window.onload = () => {
+  // Check if token exists
+  if (accessToken) {
+    startDashboard();
+  }
+  // Check for OAuth code in URL
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  if (code) {
+    history.replaceState({}, '', window.location.pathname);
+    alert('Login successful! Now go to your Upstox developer account, generate your Access Token and paste it below.');
+  }
+};
+
+function startDashboard() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  renderCards();
+  fetchAllData();
+  startCountdown();
+}
+
+// ═══════════════════════════════════════════════════
+// FETCH LIVE DATA
+// ═══════════════════════════════════════════════════
+async function fetchAllData() {
+  document.getElementById('updatedTime').innerHTML = '<span class="spinner"></span> Fetching live data...';
+  for (const stock of STOCKS) {
+    try {
+      await fetchStockData(stock);
+    } catch(e) {
+      console.warn('Error fetching', stock.sym, e);
+      useMockData(stock);
+    }
+  }
+  renderCards();
+  const now = new Date().toTimeString().slice(0,8);
+  document.getElementById('updatedTime').innerHTML = `<span class="live-dot"></span> Live · Updated ${now}`;
+}
+
+async function fetchStockData(stock) {
+  // Fetch intraday candles (1 min)
+  const url = `https://api.upstox.com/v2/historical-candle/intraday/${encodeURIComponent(stock.token)}/1minute`;
+  const res = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${accessToken}`, 'Accept': 'application/json' }
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  if (data.status !== 'success') throw new Error('API error');
+
+  const candles = data.data.candles.map(c => ({
+    time: new Date(c[0]).toTimeString().slice(0,5),
+    open: c[1], high: c[2], low: c[3], close: c[4], vol: c[5]
+  })).reverse();
+
+  // Calculate VWAP
+  let sumTP = 0, sumVol = 0;
+  const withVWAP = candles.map(c => {
+    const tp = (c.high + c.low + c.close) / 3;
+    sumTP += tp * c.vol; sumVol += c.vol;
+    return { ...c, vwap: sumVol > 0 ? +(sumTP / sumVol).toFixed(2) : c.close };
+  });
+
+  const rsiArr = calcRSI(withVWAP);
+  stockData[stock.sym] = { candles: withVWAP, rsi: rsiArr };
+  checkSignals(stock, withVWAP, rsiArr);
+}
+
+function useMockData(stock) {
+  // Fallback mock data if API fails
+  let price = stock.base || 300;
+  let sumTP = 0, sumVol = 0;
+  const candles = Array.from({ length: 40 }, (_, i) => {
+    const open = price;
+    const change = (Math.random() - 0.48) * price * 0.004;
+    const close = +(open + change).toFixed(2);
+    const high = +(Math.max(open,close) + Math.random()*price*0.002).toFixed(2);
+    const low = +(Math.min(open,close) - Math.random()*price*0.002).toFixed(2);
+    const vol = Math.floor(Math.random()*80000+20000);
+    const tp = (high+low+close)/3;
+    sumTP += tp*vol; sumVol += vol;
+    const vwap = +(sumTP/sumVol).toFixed(2);
+    price = close;
+    const t = new Date(); t.setHours(9, 15+i*5, 0);
+    return { time: t.toTimeString().slice(0,5), open, high, low, close, vol, vwap };
+  });
+  const rsiArr = calcRSI(candles);
+  stockData[stock.sym] = { candles, rsi: rsiArr, mock: true };
+}
+
+// ═══════════════════════════════════════════════════
+// INDICATORS
+// ═══════════════════════════════════════════════════
+function calcRSI(candles, period=14) {
+  const rsi = new Array(candles.length).fill(50);
+  if (candles.length < period+1) return rsi;
+  let gains=0, losses=0;
+  for (let i=1; i<=period; i++) {
+    const d = candles[i].close - candles[i-1].close;
+    if (d>0) gains+=d; else losses-=d;
+  }
+  let ag=gains/period, al=losses/period;
+  for (let i=period; i<candles.length; i++) {
+    if (i>period) {
+      const d = candles[i].close - candles[i-1].close;
+      ag = (ag*(period-1)+(d>0?d:0))/period;
+      al = (al*(period-1)+(d<0?-d:0))/period;
+    }
+    const rs = al===0?100:ag/al;
+    rsi[i] = +(100-100/(1+rs)).toFixed(1);
+  }
+  return rsi;
+}
+
+function detectSignal(candles, rsiArr) {
+  const n = candles.length;
+  if (n < 2) return null;
+  const c = candles[n-1], prev = candles[n-2];
+  const rsi = rsiArr[n-1];
+  const crossUp = prev.close < prev.vwap && c.close >= c.vwap;
+  const crossDn = prev.close > prev.vwap && c.close <= c.vwap;
+  if (rsi > 55 && crossUp) return 'BUY';
+  if (rsi < 45 && crossDn) return 'SELL';
+  return null;
+}
+
+function checkSignals(stock, candles, rsiArr) {
+  const sig = detectSignal(candles, rsiArr);
+  const prev = prevSignals[stock.sym];
+  if (sig && sig !== prev) {
+    prevSignals[stock.sym] = sig;
+    const last = candles[candles.length-1];
+    triggerAlert(stock.sym, sig, last.close, rsiArr[rsiArr.length-1]);
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// ALERTS
+// ═══════════════════════════════════════════════════
+function triggerAlert(sym, signal, price, rsi) {
+  playBeep(signal);
+  showToast(sym, signal, price, rsi);
+}
+
+function playBeep(type) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.frequency.value = type==='BUY' ? 880 : 440;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+0.5);
+    osc.start(); osc.stop(audioCtx.currentTime+0.5);
+  } catch(e){}
+}
+
+function showToast(sym, signal, price, rsi) {
+  const el = document.createElement('div');
+  el.className = `alert-toast alert-${signal.toLowerCase()}`;
+  el.innerHTML = `🔔 ${sym} — ${signal} @ ₹${price} | RSI ${rsi}`;
+  document.getElementById('alertContainer').appendChild(el);
+  setTimeout(() => el.remove(), 7000);
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER CARDS
+// ═══════════════════════════════════════════════════
+function renderCards() {
+  const grid = document.getElementById('cardsGrid');
+  grid.innerHTML = '';
+  STOCKS.forEach(stock => {
+    const d = stockData[stock.sym];
+    if (!d) {
+      // Placeholder loading card
+      grid.innerHTML += `
+        <div class="card">
+          <div class="stock-sym">${stock.sym}</div>
+          <div style="color:var(--muted);font-size:12px;margin-top:8px;display:flex;align-items:center;gap:8px;">
+            <span class="spinner"></span> Loading live data...
+          </div>
+        </div>`;
+      return;
+    }
+    const candles = d.candles;
+    const rsiArr = d.rsi;
+    const last = candles[candles.length-1];
+    const first = candles[0];
+    const rsi = rsiArr[rsiArr.length-1];
+    const change = +(last.close - first.open).toFixed(2);
+    const changePct = +((change/first.open)*100).toFixed(2);
+    const signal = detectSignal(candles, rsiArr);
+    const signalColor = signal==='BUY' ? 'var(--green)' : signal==='SELL' ? 'var(--red)' : 'var(--muted)';
+    const badgeClass = signal==='BUY' ? 'badge-buy' : signal==='SELL' ? 'badge-sell' : 'badge-none';
+    const badgeText = signal || 'WATCHING';
+    const rsiColor = rsi>55 ? 'var(--green)' : rsi<45 ? 'var(--red)' : 'var(--accent)';
+    const mockNote = d.mock ? '<span style="color:var(--muted);font-size:10px;">DEMO</span>' : '<span style="color:var(--green);font-size:10px;">LIVE</span>';
+
+    grid.innerHTML += `
+      <div class="card" id="card-${stock.sym}">
+        <div class="card-top-bar" style="background:${signalColor};"></div>
+        <div class="card-header">
+          <div>
+            <div class="stock-sym">${stock.sym} ${mockNote}</div>
+            <div class="stock-price">₹${last.close.toFixed(2)}</div>
+            <div class="stock-change" style="color:${change>=0?'var(--green)':'var(--red)'}">
+              ${change>=0?'▲':'▼'} ${Math.abs(change)} (${Math.abs(changePct)}%)
+            </div>
+          </div>
+          <div class="card-right">
+            <svg width="64" height="64" viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="26" fill="none" stroke="var(--border)" stroke-width="5"/>
+              <circle cx="32" cy="32" r="26" fill="none" stroke="${rsiColor}" stroke-width="5"
+                stroke-dasharray="${(rsi/100)*163.4} 163.4"
+                stroke-linecap="round" transform="rotate(-90 32 32)"/>
+              <text x="32" y="37" text-anchor="middle" fill="${rsiColor}" font-size="14" font-family="var(--font)" font-weight="700">${rsi}</text>
+            </svg>
+            <div style="font-size:9px;color:var(--muted);letter-spacing:2px;text-align:center;">RSI</div>
+            <span class="badge ${badgeClass}">${badgeText}</span>
+          </div>
+        </div>
+
+        <!-- Mini chart -->
+        <canvas class="mini-chart" id="chart-${stock.sym}"></canvas>
+
+        <div class="card-footer">
+          <span>VWAP <span style="color:var(--accent)">₹${last.vwap}</span></span>
+          <span>LOT ${stock.lot.toLocaleString()}</span>
+          <span style="color:${rsiColor}">RSI ${rsi>55?'▲ BULL':rsi<45?'▼ BEAR':'NEUTRAL'}</span>
+        </div>
+      </div>`;
+
+    // Draw mini chart after DOM update
+    requestAnimationFrame(() => drawMiniChart(stock.sym, candles));
+  });
+}
+
+function drawMiniChart(sym, candles) {
+  const canvas = document.getElementById(`chart-${sym}`);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 300;
+  const H = 70;
+  canvas.width = W; canvas.height = H;
+
+  const prices = candles.map(c => c.close);
+  const vwaps = candles.map(c => c.vwap);
+  const all = [...prices, ...vwaps];
+  const minP = Math.min(...all), maxP = Math.max(...all);
+  const range = maxP - minP || 1;
+
+  const x = i => (i / (candles.length-1)) * W;
+  const y = v => H - ((v - minP) / range) * (H-8) - 4;
+
+  // Price line
+  ctx.beginPath();
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 1.5;
+  prices.forEach((p,i) => i===0 ? ctx.moveTo(x(i),y(p)) : ctx.lineTo(x(i),y(p)));
+  ctx.stroke();
+
+  // VWAP line
+  ctx.beginPath();
+  ctx.strokeStyle = '#f0b429';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4,3]);
+  vwaps.forEach((v,i) => i===0 ? ctx.moveTo(x(i),y(v)) : ctx.lineTo(x(i),y(v)));
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+// ═══════════════════════════════════════════════════
+// COUNTDOWN & REFRESH
+// ═══════════════════════════════════════════════════
+function startCountdown() {
+  clearInterval(countdownTimer);
+  countdown = refreshInterval;
+  updateCountdownUI();
+  countdownTimer = setInterval(() => {
+    countdown--;
+    if (countdown <= 0) {
+      countdown = refreshInterval;
+      fetchAllData();
+    }
+    updateCountdownUI();
+  }, 1000);
+}
+
+function updateCountdownUI() {
+  document.getElementById('countdownText').textContent = countdown + 's';
+  const arc = document.getElementById('countdownArc');
+  const pct = countdown / refreshInterval;
+  const circ = 69.1;
+  arc.setAttribute('stroke-dasharray', `${pct*circ} ${circ}`);
+}
+
+function setRefresh(secs) {
+  refreshInterval = secs;
+  document.querySelectorAll('.rbtn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  startCountdown();
+}
+
+// ═══════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════
+function showTab(name, btn) {
+  ['signals','calculator','journal'].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t===name ? 'block' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+// SL CALCULATOR
+// ═══════════════════════════════════════════════════
+function setCalcType(t) {
+  calcType = t;
+  document.getElementById('btnBuy').style.background = t==='BUY' ? '#00e5a033' : 'transparent';
+  document.getElementById('btnBuy').style.color = t==='BUY' ? 'var(--green)' : 'var(--muted2)';
+  document.getElementById('btnSell').style.background = t==='SELL' ? '#ff456033' : 'transparent';
+  document.getElementById('btnSell').style.color = t==='SELL' ? 'var(--red)' : 'var(--muted2)';
+  calcRR();
+}
+
+function calcRR() {
+  const entry = parseFloat(document.getElementById('cEntry').value)||0;
+  const sl    = parseFloat(document.getElementById('cSL').value)||0;
+  const tgt   = parseFloat(document.getElementById('cTarget').value)||0;
+  const qty   = parseFloat(document.getElementById('cQty').value)||0;
+  if (!entry||!sl||!tgt||!qty) return;
+  const risk   = Math.abs(entry-sl)*qty;
+  const reward = Math.abs(tgt-entry)*qty;
+  const rr     = risk>0 ? (reward/risk).toFixed(2) : '—';
+  document.getElementById('rRisk').textContent   = `₹${risk.toLocaleString('en-IN',{maximumFractionDigits:0})}`;
+  document.getElementById('rReward').textContent = `₹${reward.toLocaleString('en-IN',{maximumFractionDigits:0})}`;
+  document.getElementById('rRR').textContent     = rr!=='—' ? `1:${rr}` : '—';
+  document.getElementById('rRR').style.color     = parseFloat(rr)>=2 ? 'var(--green)' : 'var(--accent)';
+  const hint = document.getElementById('calcHint');
+  if (rr!=='—') {
+    const slPct  = ((Math.abs(entry-sl)/entry)*100).toFixed(2);
+    const tgtPct = ((Math.abs(tgt-entry)/entry)*100).toFixed(2);
+    hint.innerHTML = `SL: <span style="color:var(--red)">${slPct}%</span> &nbsp; Target: <span style="color:var(--green)">${tgtPct}%</span> &nbsp; ${parseFloat(rr)<1.5?'<span style="color:var(--accent)">⚠ R:R below 1.5 — risky</span>':'<span style="color:var(--green)">✓ Good R:R</span>'}`;
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// TRADE JOURNAL
+// ═══════════════════════════════════════════════════
+function toggleForm() {
+  const f = document.getElementById('addForm');
+  f.style.display = f.style.display==='none' ? 'block' : 'none';
+}
+
+function setJType(t) {
+  jType = t;
+  document.getElementById('jBtnBuy').style.background  = t==='BUY'  ? '#00e5a033' : 'transparent';
+  document.getElementById('jBtnBuy').style.color       = t==='BUY'  ? 'var(--green)' : 'var(--muted2)';
+  document.getElementById('jBtnSell').style.background = t==='SELL' ? '#ff456033' : 'transparent';
+  document.getElementById('jBtnSell').style.color      = t==='SELL' ? 'var(--red)' : 'var(--muted2)';
+}
+
+function saveTrade() {
+  const entry = parseFloat(document.getElementById('jEntry').value);
+  const exit  = parseFloat(document.getElementById('jExit').value);
+  const qty   = parseInt(document.getElementById('jQty').value);
+  if (!entry||!exit||!qty) { alert('Fill in entry, exit and quantity!'); return; }
+  const trade = {
+    id: Date.now(),
+    date: new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short'}),
+    sym: document.getElementById('jSym').value,
+    type: jType, entry, exit, qty,
+    note: document.getElementById('jNote').value
+  };
+  trades.unshift(trade);
+  localStorage.setItem('trades', JSON.stringify(trades));
+  document.getElementById('jEntry').value='';
+  document.getElementById('jExit').value='';
+  document.getElementById('jQty').value='';
+  document.getElementById('jNote').value='';
+  document.getElementById('addForm').style.display='none';
+  renderJournal();
+}
+
+function renderJournal() {
+  const tbody = document.getElementById('journalBody');
+  if (!trades.length) {
+    tbody.innerHTML='<tr><td colspan="8" style="color:var(--muted);text-align:center;padding:20px;">No trades yet. Add your first trade!</td></tr>';
+    document.getElementById('totalPnL').textContent='Total P&L: —';
+    return;
+  }
+  let total = 0;
+  tbody.innerHTML = trades.map(t => {
+    const pnl = (t.type==='BUY' ? t.exit-t.entry : t.entry-t.exit) * t.qty;
+    total += pnl;
+    return `<tr>
+      <td style="color:var(--muted2)">${t.date}</td>
+      <td style="color:var(--accent);font-weight:700">${t.sym}</td>
+      <td><span class="badge ${t.type==='BUY'?'badge-buy':'badge-sell'}">${t.type}</span></td>
+      <td>${t.entry}</td><td>${t.exit}</td>
+      <td style="color:var(--muted2)">${t.qty.toLocaleString()}</td>
+      <td class="${pnl>=0?'pnl-pos':'pnl-neg'}">${pnl>=0?'+':''}₹${Math.round(pnl).toLocaleString()}</td>
+      <td style="color:var(--muted2);font-size:11px">${t.note||'—'}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('totalPnL').innerHTML =
+    `Total P&L: <span class="${total>=0?'pnl-pos':'pnl-neg'}">${total>=0?'+':''}₹${Math.round(total).toLocaleString()}</span>`;
+}
+
+// Init journal on load
+renderJournal();
+</script>
+</body>
+</html>
